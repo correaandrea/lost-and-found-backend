@@ -38,4 +38,12 @@ export class ItemsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async findOne(id: number) { // Cambia 'string' por 'number' si tu ID en Prisma es Int
+    return await this.prisma.item.findUnique({
+      where: { 
+        id: Number(id) // Si es número sería id: Number(id)
+      },
+    });
+  }
 }

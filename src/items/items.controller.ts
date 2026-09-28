@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, UploadedFile, UseInterceptors } from '@nes
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ItemsService } from './items.service';
 import { Prisma } from '@prisma/client';
+import { Param } from '@nestjs/common';
 
 @Controller('items')
 export class ItemsController {
@@ -19,5 +20,10 @@ export class ItemsController {
   @Get()
   async getItems() {
     return this.itemsService.findAllItems();
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: number) {
+    return await this.itemsService.findOne(id);
   }
 }
