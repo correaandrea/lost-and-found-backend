@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ItemsService {
@@ -10,40 +9,41 @@ export class ItemsService {
     private cloudinary: CloudinaryService,
   ) {}
 
-  /**
-   * Uploads image to Cloudinary (if provided) and saves the item in Neon DB
-   */
-  async createItemWithImage(data: Prisma.ItemCreateInput, file?: Express.Multer.File) {
-    let imageUrl = null;
-    
+  async create(data: any, file?: any) {
+    let uploadedUrl = null;
+
     if (file) {
-      const uploadedImage = await this.cloudinary.uploadFile(file);
-      imageUrl = uploadedImage.secure_url;
+      try {
+        const uploadResult = await this.cloudinary.uploadImage(file);
+        uploadedUrl = uploadResult.secure_url;
+      } catch (error) {
+        throw new BadRequestException('Error al subir la imagen a Cloudinary');
+      }
     }
 
     return this.prisma.item.create({
       data: {
-        ...data,
-        imageUrl,
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        location: data.location,
+        status: data.status,
+        imageUrl: uploadedUrl,
       },
     });
   }
 
-  /**
-   * Retrieves the 10 most recently reported items
-   */
-  async findAllItems() {
+  async findAll() {
     return this.prisma.item.findMany({
-      take: 10,
-      orderBy: { createdAt: 'desc' },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
   }
 
-  async findOne(id: number) { // Cambia 'string' por 'number' si tu ID en Prisma es Int
-    return await this.prisma.item.findUnique({
-      where: { 
-        id: Number(id) // Si es número sería id: Number(id)
-      },
+  async findOne(id: number) {
+    return this.prisma.item.findUnique({
+      where: { id },
     });
   }
 }

@@ -1,8 +1,6 @@
-import { Controller, Get, Post, Body, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, UploadedFile, UseInterceptors, Param } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ItemsService } from './items.service';
-import { Prisma } from '@prisma/client';
-import { Param } from '@nestjs/common';
 
 @Controller('items')
 export class ItemsController {
@@ -11,19 +9,19 @@ export class ItemsController {
   @Post()
   @UseInterceptors(FileInterceptor('image'))
   async createItem(
-    @Body() body: Prisma.ItemCreateInput,
-    @UploadedFile() file: Express.Multer.File,
+    @Body() body: any,
+    @UploadedFile() file: any 
   ) {
-    return this.itemsService.createItemWithImage(body, file);
+    return this.itemsService.create(body, file);
   }
 
   @Get()
-  async getItems() {
-    return this.itemsService.findAllItems();
+  async findAll() {
+    return this.itemsService.findAll();
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number) {
-    return await this.itemsService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    return this.itemsService.findOne(Number(id));
   }
 }
