@@ -33,12 +33,25 @@ export class ItemsService {
     });
   }
 
-  async findAll() {
-    return this.prisma.item.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+  async findAll(search?: string, location?: string) {
+      const whereClause: any = {};
+
+      if (search) {
+        whereClause.OR = [
+          // AQUÍ ESTABA EL ERROR: Cambiamos 'name' por 'title'
+          { title: { contains: search, mode: 'insensitive' } }, 
+          { description: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      if (location) {
+        whereClause.location = { contains: location, mode: 'insensitive' };
+      }
+
+      return await this.prisma.item.findMany({
+        where: whereClause,
+        // orderBy: { createdAt: 'desc' }, // Si tienes este campo para ordenar, déjalo
+      });
   }
 
   async findOne(id: number) {
