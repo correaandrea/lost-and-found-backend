@@ -6,14 +6,26 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  picture   String?  
+  role      String   @default("STUDENT")
+  createdAt DateTime @default(now())
+  items     Item[]   
+}
+
 model Item {
   id          Int      @id @default(autoincrement())
-  title       String   
-  description String   
-  category    String   
-  location    String   
-  imageUrl    String?  
-  status      String   @default("PERDIDO") 
+  title       String
+  description String
+  category    String
+  location    String
+  imageUrl    String?
+  status      String   @default("ENCONTRADO")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  userId      Int?     
+  user        User?    @relation(fields: [userId], references: [id])
 }

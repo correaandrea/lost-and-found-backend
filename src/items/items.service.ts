@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
@@ -9,15 +9,14 @@ export class ItemsService {
     private cloudinary: CloudinaryService,
   ) {}
 
-  async create(data: any, file?: any) {
+  async create(data: any, file: any, userId: number) {
     let uploadedUrl = null;
-
     if (file) {
       try {
         const uploadResult = await this.cloudinary.uploadImage(file);
         uploadedUrl = uploadResult.secure_url;
       } catch (error) {
-        throw new BadRequestException('Error al subir la imagen a Cloudinary');
+        throw new BadRequestException('Error al subir la imagen');
       }
     }
 
@@ -29,34 +28,31 @@ export class ItemsService {
         location: data.location,
         status: data.status,
         imageUrl: uploadedUrl,
+        userId: userId, // Asociamos el objeto al usuario
       },
     });
   }
 
-  async findAll(search?: string, location?: string) {
-      const whereClause: any = {};
+  async findAll() {
+    return this.prisma.item.findMany({ orderBy: { createdAt: 'desc' } });
+  }
 
-      if (search) {
-        whereClause.OR = [
-          // AQUÍ ESTABA EL ERROR: Cambiamos 'name' por 'title'
-          { title: { contains: search, mode: 'insensitive' } }, 
-          { description: { contains: search, mode: 'insensitive' } },
-        ];
-      }
-
-      if (location) {
-        whereClause.location = { contains: location, mode: 'insensitive' };
-      }
-
-      return await this.prisma.item.findMany({
-        where: whereClause,
-        // orderBy: { createdAt: 'desc' }, // Si tienes este campo para ordenar, déjalo
-      });
+  async findMyItems(userId: number) {
+    return this.prisma.item.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findOne(id: number) {
-    return this.prisma.item.findUnique({
-      where: { id },
-    });
+    return this.prisma.item.findUnique({ where: { id } });
+  }
+
+  async remove(id: number, userId: number) {
+    const item = await this.prisma.item.findUnique({ where: { id } });
+    if (!item) throw new BadRequestException('Objeto no encontrado');
+    if (item.userId !== userId) throw new UnauthorizedException('Solo puedes borrar tus propios objetos');
+
+    return this.prisma.item.delete({ where: { id } });
   }
 }
