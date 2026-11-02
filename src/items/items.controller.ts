@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UploadedFile, UseInterceptors, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, UploadedFile, UseInterceptors, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ItemsService } from './items.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -14,9 +14,14 @@ export class ItemsController {
     return this.itemsService.create(body, file, req.user.userId);
   }
 
-  @Get()
-  async findAll() {
-    return this.itemsService.findAll();
+@Get()
+  async findAll(
+    @Query('search') search?: string,
+    @Query('location') location?: string,
+    @Query('category') category?: string,
+    @Query('status') status?: string,
+  ) {
+    return await this.itemsService.findAll(search, location, category, status);
   }
 
   @Get('me')

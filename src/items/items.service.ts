@@ -33,8 +33,36 @@ export class ItemsService {
     });
   }
 
-  async findAll() {
-    return this.prisma.item.findMany({ orderBy: { createdAt: 'desc' } });
+async findAll(search?: string, location?: string, category?: string, status?: string) {
+    const whereClause: any = {};
+
+    if (search) {
+      whereClause.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (location) {
+      whereClause.location = { contains: location, mode: 'insensitive' };
+    }
+
+    if (category) {
+      whereClause.category = { equals: category, mode: 'insensitive' };
+    }
+
+    if (status) {
+      if (status === 'encontrado') {
+        whereClause.status = { in: ['ENCONTRADO', 'encontrado', 'found', 'FOUND', 'Encontrado'] };
+      } else if (status === 'perdido') {
+        whereClause.status = { in: ['PERDIDO', 'perdido', 'lost', 'LOST', 'Perdido'] };
+      }
+    }
+
+    return await this.prisma.item.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findMyItems(userId: number) {
