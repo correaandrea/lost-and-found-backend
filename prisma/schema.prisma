@@ -21,11 +21,12 @@ model Item {
   title       String
   description String
   category    String
+  city        String   @default("Medellín, Colombia") // NUEVO CAMPO
   location    String
   imageUrl    String?
   status      String   @default("ENCONTRADO")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  userId      Int?     
+  userId      Int?
   user        User?    @relation(fields: [userId], references: [id])
 }

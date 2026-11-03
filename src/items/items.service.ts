@@ -25,6 +25,7 @@ export class ItemsService {
         title: data.title,
         description: data.description,
         category: data.category,
+        city: data.city,
         location: data.location,
         status: data.status,
         imageUrl: uploadedUrl,
