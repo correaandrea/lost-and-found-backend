@@ -1,114 +1,158 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Lost & Found Uni — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST de **Lost & Found Uni**, un sistema centralizado para reportar, buscar y recuperar objetos perdidos y encontrados en la Universidad de Antioquia (UdeA).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+> Proyecto desarrollado por **Emanuel Munera Pérez** y **Andrea Correa Arango** para el curso *Proyecto Integrador II* (Ingeniería de Sistemas, Universidad de Antioquia).
 
-## Description
+El frontend vive en el repositorio hermano [`lost-and-found-frontend`](../lost-and-found-frontend).
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Qué hace
 
-## Project setup
+- **Autenticación institucional:** inicio de sesión con Google OAuth 2.0 restringido a cuentas `@udea.edu.co`; la sesión se maneja con JWT.
+- **Reportes de objetos:** publicar objetos perdidos o encontrados con foto (Cloudinary), categoría, sede, ubicación y un *detalle privado de verificación* opcional para objetos encontrados.
+- **Búsqueda:** filtros combinables por texto, sede, ubicación, categoría, estado y rango de fechas, con paginación en el servidor.
+- **Coincidencias:** sugiere reportes del estado opuesto (perdido ↔ encontrado) de la misma sede y categoría, ordenados por similitud textual.
+- **Contacto:** entrega el correo de quien publicó un reporte, solo a usuarios autenticados, para escribirle por Gmail.
+- **Resolución:** quien publica un reporte lo marca como resuelto (entregado o encontrado) o lo reabre.
+- **Administración y auditoría:** rol `ADMIN` para moderar reportes, y una bitácora de los cambios de estado y de las consultas de contacto.
 
-```bash
-$ npm install
-```
+## Stack
 
-## Compile and run the project
+| Capa | Tecnología |
+|---|---|
+| Framework | [NestJS](https://nestjs.com) 12 · TypeScript |
+| Base de datos | PostgreSQL (desarrollado sobre [Neon](https://neon.tech)) con [Prisma](https://www.prisma.io) 7 |
+| Imágenes | [Cloudinary](https://cloudinary.com) |
+| Autenticación | Passport (Google OAuth 2.0) · JWT |
+| Pruebas | Jest · Supertest |
+| Calidad | Oxlint · Prettier |
 
-```bash
-# development
-$ npm run start
+## Requisitos previos
 
-# watch mode
-$ npm run start:dev
+- Node.js 22 o superior
+- Una base de datos PostgreSQL (por ejemplo, un proyecto gratuito en Neon)
+- Una cuenta de Cloudinary
+- Credenciales OAuth de Google Cloud (tipo *aplicación web*)
 
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
+## Puesta en marcha
 
 ```bash
-# unit tests
-$ npm run test
+# 1. Instalar dependencias
+npm install
 
-# e2e tests
-$ npm run test:e2e
+# 2. Configurar variables de entorno (ver tabla abajo)
+cp .env.example .env
 
-# test coverage
-$ npm run test:cov
+# 3. Generar el cliente de Prisma y crear las tablas
+npx prisma generate --config prisma7.config.ts
+npx prisma db push --config prisma7.config.ts
+
+# 4. Levantar el servidor en modo desarrollo (http://localhost:3000)
+npm run start:dev
 ```
 
-## Deployment
+### Variables de entorno
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+| Variable | Descripción |
+|---|---|
+| `DATABASE_URL` | Cadena de conexión de PostgreSQL |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Credenciales de Cloudinary |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Credenciales OAuth de Google |
+| `GOOGLE_CALLBACK_URL` | URL de retorno registrada en Google, p. ej. `http://localhost:3000/auth/google/callback` |
+| `JWT_SECRET` | Secreto para firmar los tokens. Usa un valor largo y aleatorio |
+| `ADMIN_EMAILS` | Correos con rol administrador, separados por coma. El rol se asigna en el siguiente inicio de sesión |
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+El archivo `.env` no se versiona. Nunca subas credenciales al repositorio.
+
+## Scripts
+
+| Comando | Descripción |
+|---|---|
+| `npm run start:dev` | Servidor en modo *watch* |
+| `npm run build` / `npm run start:prod` | Compila y ejecuta la versión de producción |
+| `npm test` | Pruebas unitarias |
+| `npm run test:cov` | Pruebas con cobertura |
+| `npm run test:smoke` | Prueba de humo de la capa HTTP (compila a `dist-smoke` y lo borra al terminar) |
+| `npm run lint` | Análisis estático con Oxlint |
+| `npm run seed:demo` | Inserta usuarios y reportes ficticios para probar |
+| `npm run seed:demo:clean` | Elimina esos datos de demostración |
+
+## API
+
+Las rutas marcadas con 🔒 exigen el encabezado `Authorization: Bearer <token>`.
+
+### Autenticación
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/auth/google` | Inicia el flujo con Google |
+| GET | `/auth/google/callback` | Retorno de Google; redirige al frontend con el token |
+
+### Objetos
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/items` | Listado público de reportes activos (filtros abajo) |
+| GET | `/items/:id` | Detalle de un reporte |
+| GET | `/items/:id/matches` | Posibles coincidencias del reporte |
+| POST 🔒 | `/items` | Publica un reporte (`multipart/form-data`: `title`, `description`, `category`, `city`, `location`, `status`, `image`?, `privateDetail`?) |
+| GET 🔒 | `/items/me` | Reportes del usuario, incluidos los resueltos |
+| GET 🔒 | `/items/:id/contact` | Correo de quien publicó el reporte (queda en la auditoría) |
+| PATCH 🔒 | `/items/:id/state` | El autor cambia el estado: `{ "state": "ACTIVE" \| "RESOLVED", "note"? }` |
+| DELETE 🔒 | `/items/:id` | El autor elimina su reporte |
+
+**Filtros de `GET /items`:** `search`, `location`, `category`, `city`, `status` (`lost`/`found`), `from`, `to` (`AAAA-MM-DD`), `page`, `limit` (máx. 100). `category`, `city` y `status` aceptan varios valores separados por `|`.
+
+### Administración (rol `ADMIN`) 🔒
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/admin/items` | Todos los reportes (activos y resueltos), con búsqueda y filtro por estado |
+| PATCH | `/admin/items/:id/state` | Cambia el estado de cualquier reporte |
+| DELETE | `/admin/items/:id` | Elimina cualquier reporte |
+| GET | `/admin/audit` | Bitácora de auditoría paginada |
+
+## Modelo de datos
+
+- **User:** correo único, nombre, foto y rol (`STUDENT` | `ADMIN`).
+- **Item:** título, descripción, categoría, sede, ubicación, imagen, tipo (`lost`/`found`), estado de gestión (`ACTIVE` | `RESOLVED`), fecha de resolución y detalle privado. Pertenece a un usuario, y su correo es el contacto del reporte.
+- **AuditLog:** usuario, acción, reporte y detalles de cada acción auditada. No tiene llave foránea al reporte para conservar el historial si este se elimina.
+
+> La tabla `Claim` del esquema es un resto de un diseño anterior (flujo de reclamación y aprobación). Está vacía y el código no la usa; se puede eliminar quitando el modelo y ejecutando `prisma db push --accept-data-loss`.
+
+## Pruebas
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm test            # 91 pruebas unitarias
+npm run test:smoke  # 29 comprobaciones sobre las rutas, guards y permisos
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- Las pruebas unitarias aíslan la lógica de negocio con dobles de la base de datos, de Cloudinary y de JWT. NestJS 12 se publica solo como ESM, por lo que Jest lo reemplaza por un doble mínimo (`test/nest-mocks.ts`).
+- La prueba de humo arranca la aplicación completa con una base de datos simulada en memoria (`test/smoke/http-smoke.cjs`). No consulta PostgreSQL real.
+- `test/app.e2e-spec.ts` es la plantilla de NestJS y no se mantiene.
 
-## Observability
+## Estructura
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+```
+src/
+├── auth/         Google OAuth, JWT, roles y guard de administrador
+├── items/        Reportes: filtros, coincidencias, contacto y estado
+├── admin/        Moderación de reportes y consulta de la auditoría
+├── audit/        Bitácora de auditoría
+├── cloudinary/   Subida de imágenes
+├── prisma/       Acceso a la base de datos
+└── common/       Utilidades compartidas (paginación)
+prisma/schema.prisma   Modelo de datos
+scripts/demo-data.cjs  Datos de demostración
+test/                  Doble de NestJS y prueba de humo
+```
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+## Limitaciones conocidas
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+- El destino de la redirección tras el login (`http://localhost:5173`) y el puerto (3000) están fijos en el código; falta parametrizarlos para un despliegue.
+- CORS está abierto y `JWT_SECRET` tiene un valor por defecto en el código si falta la variable: ambos deben endurecerse antes de producción.
+- El proyecto no está desplegado; se ejecuta en local.
 
-## Resources
+## Créditos
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Proyecto académico de **Emanuel Munera Pérez** y **Andrea Correa Arango**, Universidad de Antioquia — Proyecto Integrador II. Sin licencia de uso abierto (`UNLICENSED`).

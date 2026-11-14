@@ -8,6 +8,7 @@ tsconfig.build.tsbuildinfo
 
 .env
 .env.*
+!.env.example
 
 .agents/
 .claude/
