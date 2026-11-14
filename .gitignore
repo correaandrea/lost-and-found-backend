@@ -17,3 +17,5 @@ tsconfig.build.tsbuildinfo
 
 .DS_Store
 Thumbs.db
+/dist-smoke
+/coverage

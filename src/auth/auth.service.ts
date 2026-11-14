@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
+import { roleForEmail } from './roles';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +17,9 @@ export class AuthService {
 
     const { email, name, picture } = req.user;
 
+    // El rol se deriva de la lista de administradores (ADMIN_EMAILS) en cada ingreso
+    const role = roleForEmail(email);
+
     let user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -24,8 +28,11 @@ export class AuthService {
           email,
           name,
           picture,
+          role,
         },
       });
+    } else if (user.role !== role) {
+      user = await this.prisma.user.update({ where: { id: user.id }, data: { role } });
     }
 
     const payload = { 

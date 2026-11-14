@@ -7,26 +7,75 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
   name      String
-  picture   String?  
-  role      String   @default("STUDENT")
-  createdAt DateTime @default(now())
-  items     Item[]   
+  picture   String?
+  role      String     @default("STUDENT") // STUDENT | ADMIN
+  createdAt DateTime   @default(now())
+  items     Item[]
+  auditLogs AuditLog[]
+  claims    Claim[]    @relation("ClaimClaimant")
 }
 
 model Item {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  category    String
-  city        String   @default("Medellín, Colombia") // NUEVO CAMPO
-  location    String
-  imageUrl    String?
-  status      String   @default("ENCONTRADO")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      Int?
-  user        User?    @relation(fields: [userId], references: [id])
+  id            Int       @id @default(autoincrement())
+  title         String
+  description   String
+  category      String
+  city          String    @default("Medellín, Colombia")
+  location      String
+  imageUrl      String?
+  status        String    @default("ENCONTRADO") // perdido | encontrado
+  // Estado de la gestión: ACTIVE (visible) | RESOLVED (entregado a su dueño si estaba
+  // encontrado, o recuperado por su dueño si estaba perdido)
+  state         String    @default("ACTIVE")
+  resolvedAt    DateTime?
+  // Detalle que solo conocen quien publica y los administradores; sirve para verificar
+  // que quien contacta es realmente el dueño
+  privateDetail String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  userId        Int?
+  user          User?     @relation(fields: [userId], references: [id])
+  claims        Claim[]
+}
+
+// Bitácora de las acciones que cambian el estado de un reporte o que exponen datos de contacto.
+// La aplicación solo inserta y consulta registros (nunca los modifica ni los borra).
+// No tiene llave foránea hacia Item para conservar el historial aunque se borre el reporte.
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  actorId   Int?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  action    String
+  itemId    Int?
+  claimId   Int? // LEGADO: sin uso desde que se retiró el flujo de reclamaciones
+  details   String? // JSON serializado
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([itemId])
+}
+
+// LEGADO: el flujo de reclamaciones se reemplazó por el contacto directo por correo y la
+// resolución del reporte por quien lo publicó. La tabla está vacía y ya no se usa en el código;
+// se conserva solo para que `prisma db push` no requiera borrar datos. Para eliminarla:
+//   npx prisma db push --accept-data-loss   (tras quitar este modelo y las relaciones `claims`)
+model Claim {
+  id             Int       @id @default(autoincrement())
+  itemId         Int
+  item           Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  claimantId     Int
+  claimant       User      @relation("ClaimClaimant", fields: [claimantId], references: [id])
+  message        String
+  answer         String?
+  status         String    @default("PENDING")
+  resolvedById   Int?
+  resolutionNote String?
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+
+  @@index([itemId, status])
+  @@index([claimantId])
 }
